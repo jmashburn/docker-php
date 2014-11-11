@@ -1,0 +1,22 @@
+{
+  "name": "iwobble/docker-php",
+  "description": "Docker PHP Library",
+  "keywords": [
+    "Elements"
+  ],
+  "homepage": "http://iwobble.com/",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Jared Mashburn <jmashburn@iwobble.com>"
+    }
+  ],
+  "require": {
+    "php": ">=5.3.1",
+    "ext-curl": "*"
+  },
+  "autoload": {
+    "files": ["lib/Docker.php"],
+    "classmap": ["lib/Docker/"]
+  }
+}
