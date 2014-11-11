@@ -2,7 +2,7 @@
 
 namespace Docker;
 
-class Image extends AbstractApiHandler {
+class Misc extends AbstractApiHandler {
 
 	public static function listAll() {
 

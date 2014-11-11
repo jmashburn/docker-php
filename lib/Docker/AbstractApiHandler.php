@@ -2,7 +2,7 @@
 
 namespace Docker;
 
-abstract class AbstractionApiHandler extends Util\Object {
+abstract class AbstractApiHandler extends Util\Object {
 
 	public static function name($class = null) {
 		if (!$class) {
