@@ -14,7 +14,7 @@ class Object implements \Countable, \Iterator, \ArrayAccess
 
 	protected $skipNextIteration;
 
-	public function __construct($array = array()) {
+	public function __construct($array = array(), $class = null) {
 		if (isset($array) && !is_array($array)) {
 			$array = array($this->idField => $array);
 		}
@@ -22,7 +22,11 @@ class Object implements \Countable, \Iterator, \ArrayAccess
 		if (!empty($array)) {
 			foreach ($array as $key => $value) {
 				if (is_array($value)) {
-					$this->data[$key] = new self($value);
+					if (!is_null($class)) {
+						$this->data[$key] = new $class($value);
+					} else {
+						$this->data[$key] = new self($value);
+					}
 				} else {
 					$this->data[$key] = $value;
 				}
@@ -32,7 +36,6 @@ class Object implements \Countable, \Iterator, \ArrayAccess
 	}
 
 	public function get($name, $default = null) {
-
 		if (array_key_exists($name, $this->data)) {
 			return $this->data[$name];
 		}
@@ -76,10 +79,9 @@ class Object implements \Countable, \Iterator, \ArrayAccess
 
 	public function __clone() {
 		$array = array();
-
 		foreach ($this->data as $key => $value) {
 			if ($value instanceof self) {
-				$array[$key] == clone $value;
+				$array[$key] = clone $value;
 			} else {
 				$array[$key] = $value;
 			}

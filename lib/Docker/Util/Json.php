@@ -10,5 +10,9 @@ class Json {
 		$json = str_replace('[]', '{}', $json);
 		return $json;
 	}
+
+	public static function decode($json = null) {
+		return json_decode($json, true);
+	}
 	
 }

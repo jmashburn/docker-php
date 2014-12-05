@@ -38,71 +38,76 @@ abstract class AbstractApiHandler extends Util\Object {
 	}
 
 	private static function validate($method, $params=null, $apiAuth=null) {
-		if (isset($params) && !is_array($params)) {
-			throw new DockerException('You must pass an array as the first argument to the Docker API call');
-		}
-		if (isset($apiAuth) && !is_array($apiAuth)) {
-			throw new DockerException('You must pass an array of authentication parameters');
-		}
+		// if (isset($params['body'])) {
+		// 	if ($params['body'] instanceof self::className()) {
+
+		// 	} elseif (is_array($params['body'])) {
+
+		// 	}
+		// }
 	}
 
 	protected static function retrieveCall($params, $apiAuth = null) {
 		$class = self::className();
 		$instance = new $class($params);
 		$url = $instance->getInstanceUrl();
-		$processor = new ApiProcessor($apiAuth);
+
+		$processor = new ApiProcessor();
 		list($response, $code) = $processor->request('get', $url, $params); 
 		return self::processResponse($response);
 	}
 
-	protected static function processResponse($response) {
+	protected static function processResponse($response, $options) {
 		try {
-			// Some Response are empty. Create Empty XML for those times
-			if (!$response) {
-				$response = "<empty/>";
-			}
-			$xmlArray = Util\Xml::toArray(Util\Xml::build($response));
-			if (!empty($xmlArray['error'])) {
-				throw new DockerException($xmlArray['error']['message'], $xmlArray['error']['code']);
-			}
+			if (!empty($options['status_code']) && in_array($options['status_code'], array(404, 409, 500))) {
+				throw new \Docker\DockerException($options['reason_phrase'], $options['status_code']);
+				#$response = Util\Json::encode(array('status' => $response));
+			}	
+			$jsonArray = Util\Json::decode($response);
 			$class = self::className();
-			$instance = new $class($xmlArray);
+			if (!empty($jsonArray[0])) {
+				$instance = new Util\Object($jsonArray, $class);
+			} else {
+				$instance = new $class($jsonArray);
+			}
 			return $instance;
-		} catch (\Docker\Util\XmlException $e) {
+		} catch (\Docker\DockerException $e) {
 			throw new DockerException($e->getMessage());
 		}
 	}
 
-	protected static function postCall($class, $params = null, $apiAuth = null) {
-		self::validate('post', $params, $apiAuth);
+	protected static function postCall($class, $params = array(), $apiAuth = null) {
+		self::validate('POST', $params, $apiAuth);
 		$processor = new ApiProcessor($apiAuth);
-		$url = self::getBaseUrl($class);
-		list($response, $code) = $processor->request('post', $url, $params); 
-		return self::processResponse($response);
+		#$url = self::getBaseUrl($class);
+		list($response, $headers, $options) = $processor->request('POST', $class, $params);
+		return self::processResponse($response, $options);	
 	}
 
-	protected static function getCall($class, $params = null, $apiAuth = null) {
-		self::validate('get', $params, $apiAuth);
+	protected static function getCall($endpoint, $params = array(), $apiAuth = null) {
+		self::validate('GET', $params, $apiAuth);
 		$processor = new ApiProcessor($apiAuth);
-		$url = self::getBaseUrl($class);
-		list($response, $code) = $processor->request('get', $url, $params);
-		return self::processResponse($response);
+		#$url = self::getBaseUrl($class);
+		list($response, $headers, $options) = $processor->request('GET', $endpoint, $params);
+		return self::processResponse($response, $options);	
 	}
 
-	protected static function deleteCall($class, $params = null, $apiAuth = null) {
-		self::validate('delete', $params, $apiAuth);
+	protected static function deleteCall($class, $params = array(), $apiAuth = null) {
+		self::validate('DELETE', $params, $apiAuth);
 		$processor = new ApiProcessor($apiAuth);
-		$url = self::getBaseUrl($class);
-		list($response, $code) = $processor->request('delete', $url, $params); 
-		return self::processResponse($response);
+		#$url = self::getBaseUrl($class);
+		list($response, $headers, $options) = $processor->request('DELETE', $class, $params); 
+		return self::processResponse($response, $options);	
 	}
 
-	protected static function putCall($class, $params = null, $apiAuth = null) {
-		self::validate('put', $params, $apiAuth);
-		$class = self::className();
-		$instance = new $class($params);
-		$url = $instance->getInstanceUrl();
+	protected static function putCall($class, $params = array(), $apiAuth = null) {
+		self::validate('PUT', $params, $apiAuth);
+		$classInstant = self::className();
+		$instance = new $class(self::className());
+		#$url = $instance->getInstanceUrl();
 		$processor = new ApiProcessor($apiAuth);
-		list($response, $code) = $processor->request('put', $url, $params); 
-		return self::processResponse($response);	
+		list($response, $headers, $options) = $processor->request('PUT', $class, $params); 
+		return self::processResponse($response, $options);	
 	}
+
+}
